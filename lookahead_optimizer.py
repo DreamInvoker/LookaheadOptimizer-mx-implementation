@@ -34,7 +34,7 @@ def _register_lookahead_opt():
         for index, weight in zip(indexes, weights):
             if index not in self._lookahead_params:
                 self._lookahead_params[index] = weight.copy()
-        update_func(indexes, weights, grads, states)
+        update_func(indexes[0], weights[0], grads[0], states)
         for index, weight, grad in zip(indexes, weights, grads):
             count = self._index_update_count[index]
             if count % self.k == 0:

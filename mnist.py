@@ -27,8 +27,8 @@ import numpy as np
 import mxnet as mx
 from mxnet import gluon, autograd
 from mxnet.gluon import nn
-import optimizer
-
+import lookahead_optimizer
+import time
 
 def set_seed(seed):
     random.seed(seed)
@@ -44,7 +44,7 @@ parser.add_argument('--batch-size', type=int, default=100,
 parser.add_argument('--epochs', type=int, default=10,
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--optimizer', type=str,
-                    default='sgd', help='sgd|LookaheadSGD')
+                    default='lookaheadsgd', help='sgd|LookaheadSGD')
 parser.add_argument('--lr', type=float, default=0.1,
                     help='learning rate (default: 0.1)')
 parser.add_argument('--momentum', type=float, default=0.9,
@@ -53,7 +53,7 @@ parser.add_argument('--cuda', action='store_true', default=False,
                     help='Train on GPU with CUDA')
 parser.add_argument('--log-interval', type=int, default=100, metavar='N',
                     help='how many batches to wait before logging training status')
-parser.add_argument('--seed', type=int, default=942698, help='random seed')
+parser.add_argument('--seed', type=int, default=42, help='random seed')
 opt = parser.parse_args()
 
 set_seed(opt.seed)
@@ -107,6 +107,7 @@ def train(epochs, ctx):
     loss = gluon.loss.SoftmaxCrossEntropyLoss()
 
     for epoch in range(epochs):
+        tic = time.time()
         # reset data iterator and metric at begining of epoch.
         metric.reset()
         for i, (data, label) in enumerate(train_data):
@@ -128,7 +129,8 @@ def train(epochs, ctx):
                 name, acc = metric.get()
                 print('[Epoch %d Batch %d] Training: %s=%f' %
                       (epoch, i, name, acc))
-
+        toc = time.time()
+        print('[Epoch {}] Trianing Time: {} s'.format(epoch, toc-tic))
         name, acc = metric.get()
         print('[Epoch %d] Training: %s=%f' % (epoch, name, acc))
 
@@ -140,7 +142,7 @@ def train(epochs, ctx):
 
 if __name__ == '__main__':
     if opt.cuda:
-        ctx = mx.gpu(0)
+        ctx = mx.gpu(1)
     else:
         ctx = mx.cpu()
     train(opt.epochs, ctx)
